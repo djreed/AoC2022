@@ -6,16 +6,12 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/djreed/AoC2022/lists"
+	"github.com/djreed/AoC2022/day1/lists"
 )
 
 func main() {
-	day1()
-}
 
-func day1() {
-
-	filename := "day1/input"
+	filename := "input"
 
 	readFile, err := os.Open(filename)
 	if err != nil {
