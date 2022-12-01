@@ -1,4 +1,4 @@
-package lists
+package main
 
 import (
 	"reflect"

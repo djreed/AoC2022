@@ -1,4 +1,4 @@
-package lists
+package main
 
 func Max(list []int) int {
 	switch len(list) {

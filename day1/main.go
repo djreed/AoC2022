@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-
-	"github.com/djreed/AoC2022/day1/lists"
 )
 
 func main() {
@@ -41,17 +39,17 @@ func main() {
 	// Get a list of elf calorie sums
 	var calorieSumList []int
 	for _, elfCalories := range elfCalorieList {
-		calorieSumList = append(calorieSumList, lists.Sum(elfCalories))
+		calorieSumList = append(calorieSumList, Sum(elfCalories))
 	}
 
 	// Get the max sum of values
-	max := lists.Max(calorieSumList)
+	max := Max(calorieSumList)
 	fmt.Printf("Highest Sum: %d\n", max)
 
 	// Highest-to-Lowest sorted list
-	sortedCalorieSumList := lists.MergeSort(calorieSumList)
+	sortedCalorieSumList := MergeSort(calorieSumList)
 	requestedCount := 3
 
 	fmt.Printf("Top %d highest calorie counts: %v\n", requestedCount, sortedCalorieSumList[len(sortedCalorieSumList)-requestedCount:])
-	fmt.Printf("Top %d Elves are carrying a total of %d calories\n", requestedCount, lists.Sum(sortedCalorieSumList[len(sortedCalorieSumList)-requestedCount:]))
+	fmt.Printf("Top %d Elves are carrying a total of %d calories\n", requestedCount, Sum(sortedCalorieSumList[len(sortedCalorieSumList)-requestedCount:]))
 }
