@@ -12,23 +12,54 @@ const (
 	PAPER    = "paper"
 	SCISSORS = "scissors"
 
-	WIN  = 6
-	DRAW = 3
+	WIN  = "win"
+	DRAW = "draw"
+	LOSS = "lose"
+
+	WIN_SCORE  = 6
+	DRAW_SCORE = 3
+	LOSS_SCORE = 0
+
+	WIN_CODE  = "X"
+	DRAW_CODE = "Y"
+	LOSS_CODE = "Z"
 )
 
 var (
-	SCORES = map[string]int{
-		"rock":     1,
-		"paper":    2,
-		"scissors": 3,
+	CHOICE_SCORES = map[string]int{
+		ROCK:     1,
+		PAPER:    2,
+		SCISSORS: 3,
 	}
-	CODE_MAP = map[string]string{
+	RESULT_SCORE = map[string]int{
+		WIN:  6,
+		DRAW: 3,
+		LOSS: 0,
+	}
+	WINS_AGAINST = map[string]string{
+		ROCK:     PAPER,
+		PAPER:    SCISSORS,
+		SCISSORS: ROCK,
+	}
+	LOSES_TO = map[string]string{
+		ROCK:     SCISSORS,
+		PAPER:    ROCK,
+		SCISSORS: PAPER,
+	}
+
+	CODE_MAP_SCORE = map[string]string{
 		"A": ROCK,
-		"X": ROCK,
 		"B": PAPER,
-		"Y": PAPER,
 		"C": SCISSORS,
+		"X": ROCK,
+		"Y": PAPER,
 		"Z": SCISSORS,
+	}
+
+	CODE_MAP_OUTCOME = map[string]string{
+		"X": LOSS,
+		"Y": DRAW,
+		"Z": WIN,
 	}
 )
 
@@ -43,21 +74,23 @@ func main() {
 
 	selfScore := 0
 
-	// Reach each line of the file, add it to a given elf's contents, wrap up that elf's contents if you encounter a newline
 	for fileScanner.Scan() {
 		lineStr := fileScanner.Text()
 
 		lineContents := strings.Split(lineStr, " ")
 
-		selfCode := lineContents[1]
 		opponentCode := lineContents[0]
+		resultCode := lineContents[1]
 
-		choice := CODE_MAP[selfCode]
-		opponentChoice := CODE_MAP[opponentCode]
+		opponentChoice := CODE_MAP_SCORE[opponentCode]
+		resultOutcome := CODE_MAP_OUTCOME[resultCode]
+		choice := getChoiceForOutcome(opponentChoice, resultOutcome)
 
-		roundScore := calculateScore(choice, opponentChoice)
-		fmt.Printf("Score from %s (%s) <> %s (%s) = %d\n",
-			selfCode, choice, opponentCode, opponentChoice, roundScore)
+		roundScore := calculateScoreChoices(choice, opponentChoice)
+		fmt.Printf("Score from '%s %s' => %s<>%s => %d\n",
+			opponentCode, resultCode,
+			opponentChoice, choice,
+			roundScore)
 
 		selfScore += roundScore
 	}
@@ -65,33 +98,29 @@ func main() {
 	fmt.Printf("Total Score: %d\n", selfScore)
 }
 
-func calculateScore(choice, opponent string) int {
-	score := 0
-
+// Choice + Opponent -> round score
+func calculateScoreChoices(choice, opponent string) int {
 	// Score value of what you chose
-	score += SCORES[choice]
+	score := CHOICE_SCORES[choice]
 
-	// Same pick, draw game
-	if choice == opponent {
-		return score + DRAW
-	}
-
-	// All losses enumerated
 	switch choice {
-	case ROCK:
-		if opponent == PAPER {
-			return score
-		}
-	case PAPER:
-		if opponent == SCISSORS {
-			return score
-		}
-	case SCISSORS:
-		if opponent == ROCK {
-			return score
-		}
+	case WINS_AGAINST[opponent]:
+		return score + RESULT_SCORE[WIN] // Win
+	case LOSES_TO[opponent]:
+		return score + RESULT_SCORE[LOSS] // Loss
+	default:
+		return score + RESULT_SCORE[DRAW] // Draw
 	}
+}
 
-	// Not a draw, not a loss, you win!
-	return score + WIN
+// Opponent + Outcome -> Choice to get that outcome
+func getChoiceForOutcome(opponentChoice, outcome string) string {
+	switch outcome {
+	case WIN:
+		return WINS_AGAINST[opponentChoice]
+	case LOSS:
+		return LOSES_TO[opponentChoice]
+	default:
+		return opponentChoice
+	}
 }

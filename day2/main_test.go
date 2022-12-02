@@ -1,8 +1,10 @@
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
-func Test_calculateScore(t *testing.T) {
+func Test_calculateScoreChoices(t *testing.T) {
 	type args struct {
 		choice   string
 		opponent string
@@ -24,8 +26,39 @@ func Test_calculateScore(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := calculateScore(tt.args.choice, tt.args.opponent); got != tt.want {
+			if got := calculateScoreChoices(tt.args.choice, tt.args.opponent); got != tt.want {
 				t.Errorf("calculateScore() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_getChoiceForOutcome(t *testing.T) {
+	type args struct {
+		opponentChoice string
+		outcome        string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{"rock - win", args{ROCK, WIN}, PAPER},
+		{"rock - loss", args{ROCK, LOSS}, SCISSORS},
+		{"rock - draw", args{ROCK, DRAW}, ROCK},
+
+		{"paper - win", args{PAPER, WIN}, SCISSORS},
+		{"paper - loss", args{PAPER, LOSS}, ROCK},
+		{"paper - draw", args{PAPER, DRAW}, PAPER},
+
+		{"scissors - win", args{SCISSORS, WIN}, ROCK},
+		{"scissors - loss", args{SCISSORS, LOSS}, PAPER},
+		{"scissors - draw", args{SCISSORS, DRAW}, SCISSORS},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := getChoiceForOutcome(tt.args.opponentChoice, tt.args.outcome); got != tt.want {
+				t.Errorf("getChoiceForOutcome() = %v, want %v", got, tt.want)
 			}
 		})
 	}
