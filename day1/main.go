@@ -10,12 +10,10 @@ import (
 func main() {
 
 	filename := "input"
-
 	readFile, err := os.Open(filename)
 	if err != nil {
 		panic(err)
 	}
-
 	fileScanner := bufio.NewScanner(readFile)
 	fileScanner.Split(bufio.ScanLines)
 
