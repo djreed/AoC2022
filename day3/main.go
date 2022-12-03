@@ -7,8 +7,15 @@ import (
 )
 
 type Backpack struct {
-	c1, c2 string
+	contents string
+	c1, c2   string
 }
+
+const (
+	GROUP_SIZE = 3
+)
+
+type ElfGroup [GROUP_SIZE]Backpack
 
 func main() {
 	filename := "input"
@@ -19,17 +26,17 @@ func main() {
 	fileScanner := bufio.NewScanner(readFile)
 	fileScanner.Split(bufio.ScanLines)
 
-	var backpacks []Backpack
+	var elfBackpacks []Backpack
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
 		c1, c2 := splitBackpackString(line)
-		backpacks = append(backpacks, Backpack{c1, c2})
+		elfBackpacks = append(elfBackpacks, Backpack{line, c1, c2})
 	}
 
-	fmt.Printf("Counted %d backpacks\n", len(backpacks))
+	fmt.Printf("Counted %d backpacks\n", len(elfBackpacks))
 
 	var sharedItems []string
-	for _, backpack := range backpacks {
+	for _, backpack := range elfBackpacks {
 		sharedItem := findSharedItem(backpack.c1, backpack.c2)
 		sharedItems = append(sharedItems, sharedItem)
 	}
@@ -43,6 +50,36 @@ func main() {
 	}
 
 	fmt.Printf("Sum total of shared items: %d\n", Sum(itemScores))
+
+	var elfGroups []ElfGroup
+	for i := 0; i < len(elfBackpacks); i += GROUP_SIZE {
+		elfGroups = append(elfGroups, ElfGroup{elfBackpacks[i], elfBackpacks[i+1], elfBackpacks[i+2]})
+	}
+
+	fmt.Printf("Collected %d elf groups\n", len(elfGroups))
+
+	var groupBadges []string
+	for _, group := range elfGroups { // Group size is 3
+		backpack1 := group[0]
+		backpack2 := group[1]
+		backpack3 := group[2]
+
+		sharedItems1 := findSharedItems(backpack1.contents, backpack2.contents)
+		sharedItems2 := findSharedItems(backpack2.contents, backpack3.contents)
+
+		groupSharedItem := findSharedItem(sharedItems1, sharedItems2)
+		groupBadges = append(groupBadges, groupSharedItem)
+	}
+
+	fmt.Printf("Collected %d group badges\n", len(groupBadges))
+
+	var groupBadgeScores []int
+	for _, groupBadge := range groupBadges {
+		score := getItemScore(groupBadge)
+		groupBadgeScores = append(groupBadgeScores, score)
+	}
+
+	fmt.Printf("Sum total of group badges: %d\n", Sum(groupBadgeScores))
 
 }
 
@@ -60,6 +97,18 @@ func findSharedItem(c1, c2 string) string {
 		}
 	}
 	return ""
+}
+
+func findSharedItems(c1, c2 string) string {
+	var shared string
+	for _, c1Item := range c1 {
+		for _, c2Item := range c2 {
+			if c1Item == c2Item {
+				shared = shared + string(c1Item)
+			}
+		}
+	}
+	return shared
 }
 
 // Lowercase item types a through z have priorities 1 through 26.
