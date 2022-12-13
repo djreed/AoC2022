@@ -4,18 +4,18 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 )
 
-type Backpack struct {
-	contents string
-	c1, c2   string
+type ElfAssignment struct {
+	start, end int
 }
 
-const (
-	GROUP_SIZE = 3
-)
-
-type ElfGroup [GROUP_SIZE]Backpack
+type ElfPair struct {
+	line   string
+	e1, e2 ElfAssignment
+}
 
 func main() {
 	filename := "input"
@@ -26,109 +26,71 @@ func main() {
 	fileScanner := bufio.NewScanner(readFile)
 	fileScanner.Split(bufio.ScanLines)
 
-	var elfBackpacks []Backpack
+	var elfPairs []ElfPair
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
-		c1, c2 := splitBackpackString(line)
-		elfBackpacks = append(elfBackpacks, Backpack{line, c1, c2})
+		c1, c2 := splitElfPair(line)
+		elfPairs = append(elfPairs, ElfPair{line, c1, c2})
 	}
 
-	fmt.Printf("Counted %d backpacks\n", len(elfBackpacks))
+	fmt.Printf("Counted %d pairs of Elf assignments\n", len(elfPairs))
 
-	var sharedItems []string
-	for _, backpack := range elfBackpacks {
-		sharedItem := findSharedItem(backpack.c1, backpack.c2)
-		sharedItems = append(sharedItems, sharedItem)
-	}
-
-	fmt.Printf("Counted %d shared items among backpacks\n", len(sharedItems))
-
-	var itemScores []int
-	for _, item := range sharedItems {
-		score := getItemScore(item)
-		itemScores = append(itemScores, score)
-	}
-
-	fmt.Printf("Sum total of shared items: %d\n", Sum(itemScores))
-
-	var elfGroups []ElfGroup
-	for i := 0; i < len(elfBackpacks); i += GROUP_SIZE {
-		elfGroups = append(elfGroups, ElfGroup{elfBackpacks[i], elfBackpacks[i+1], elfBackpacks[i+2]})
-	}
-
-	fmt.Printf("Collected %d elf groups\n", len(elfGroups))
-
-	var groupBadges []string
-	for _, group := range elfGroups { // Group size is 3
-		backpack1 := group[0]
-		backpack2 := group[1]
-		backpack3 := group[2]
-
-		sharedItems1 := findSharedItems(backpack1.contents, backpack2.contents)
-		sharedItems2 := findSharedItems(backpack2.contents, backpack3.contents)
-
-		groupSharedItem := findSharedItem(sharedItems1, sharedItems2)
-		groupBadges = append(groupBadges, groupSharedItem)
-	}
-
-	fmt.Printf("Collected %d group badges\n", len(groupBadges))
-
-	var groupBadgeScores []int
-	for _, groupBadge := range groupBadges {
-		score := getItemScore(groupBadge)
-		groupBadgeScores = append(groupBadgeScores, score)
-	}
-
-	fmt.Printf("Sum total of group badges: %d\n", Sum(groupBadgeScores))
-
-}
-
-func splitBackpackString(contents string) (c1, c2 string) {
-	halfLen := len(contents) / 2
-	return contents[:halfLen], contents[halfLen:]
-}
-
-func findSharedItem(c1, c2 string) string {
-	for _, c1Item := range c1 {
-		for _, c2Item := range c2 {
-			if c1Item == c2Item {
-				return string(c1Item)
-			}
+	containedPairs := 0
+	for _, pair := range elfPairs {
+		if assignmentEncompassesAnother(pair.e1, pair.e2) || assignmentEncompassesAnother(pair.e2, pair.e1) {
+			containedPairs++
 		}
 	}
-	return ""
-}
 
-func findSharedItems(c1, c2 string) string {
-	var shared string
-	for _, c1Item := range c1 {
-		for _, c2Item := range c2 {
-			if c1Item == c2Item {
-				shared = shared + string(c1Item)
-			}
+	fmt.Printf("%d Elf pairs feature one assignment enclosing another\n", containedPairs)
+
+	overlappingPairs := 0
+	for _, pair := range elfPairs {
+		if assignmentOverlapsAnother(pair.e1, pair.e2) {
+			overlappingPairs++
 		}
 	}
-	return shared
+
+	fmt.Printf("%d Elf pairs feature one assignment overlapping another\n", overlappingPairs)
+
 }
 
-// Lowercase item types a through z have priorities 1 through 26.
-// Uppercase item types A through Z have priorities 27 through 52.
-func getItemScore(item string) int {
-	intValue := item[0] // a-z = 97-122, A-Z = 65-90
-	if intValue >= 97 && intValue <= 122 {
-		intValue -= 96
-	} else if intValue >= 65 && intValue <= 90 {
-		intValue -= 38
-	} else {
-		panic("Enexpected back item: " + item)
-	}
-	return int(intValue)
+// Parse elf pairs
+// Ex: 2-5,15-90
+func splitElfPair(line string) (assignment1, assignment2 ElfAssignment) {
+	substrings := strings.Split(line, ",")
+	assignment1String, assignment2String := substrings[0], substrings[1]
+
+	assignment1Split := strings.Split(assignment1String, "-")
+	assignment1.start, _ = strconv.Atoi(assignment1Split[0])
+	assignment1.end, _ = strconv.Atoi(assignment1Split[1])
+
+	assignment2Split := strings.Split(assignment2String, "-")
+	assignment2.start, _ = strconv.Atoi(assignment2Split[0])
+	assignment2.end, _ = strconv.Atoi(assignment2Split[1])
+
+	return // assignment1, assignment2
 }
 
-func Sum(list []int) int {
-	result := 0
-	for _, v := range list {
-		result += v
-	}
-	return result
+// Return whether the first range encloses the second
+func assignmentEncompassesAnother(comparator, target ElfAssignment) bool {
+	return comparator.start <= target.start && comparator.end >= target.end
+}
+
+// Return whether the two ranges overlap
+func assignmentOverlapsAnother(comparator, target ElfAssignment) bool {
+	encompassesOne := assignmentEncompassesAnother(comparator, target)
+	encompassesTwo := assignmentEncompassesAnother(target, comparator)
+
+	// cs --- ce
+	//    ts --- te
+	leftOverlap := (comparator.start <= target.start && comparator.start <= target.end) &&
+		(target.start >= comparator.start && target.start <= comparator.end)
+
+	// ts --- te
+	//    cs --- ce
+	rightOverlap := (target.start <= comparator.start && target.start <= comparator.end) &&
+		(comparator.start >= target.start && comparator.start <= target.end)
+
+	return encompassesOne || encompassesTwo || leftOverlap || rightOverlap
 }
