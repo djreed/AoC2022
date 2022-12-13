@@ -1,3 +1,3 @@
-module github.com/djreed/AoC2022/day6
+module github.com/djreed/AoC2022/day5
 
 go 1.19
